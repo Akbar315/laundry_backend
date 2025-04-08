@@ -1,3 +1,4 @@
+// src/user/models/user.model.ts
 import { Table, Column, Model, DataType, PrimaryKey, Default, AllowNull } from 'sequelize-typescript';
 
 @Table({ tableName: 'users', paranoid: true })
@@ -13,6 +14,10 @@ export class User extends Model<User> {
     unique: true,
   })
   ph_no: string;
+
+  @AllowNull(true)
+  @Column(DataType.STRING)
+  name: string;
 
   @AllowNull(true)
   @Column(DataType.STRING)

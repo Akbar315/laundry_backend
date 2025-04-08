@@ -1,38 +1,59 @@
 // src/auth/dto/phone-auth.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Length, Matches, IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, Length, Matches } from 'class-validator';
 
 export enum UserRole {
+  ADMIN = 'admin',
   USER = 'user',
-  SERVICE_PROVIDER = 'service_provider'
 }
 
-export class PhoneAuthDto {
+export class RegisterDto {
   @ApiProperty({
-    description: '10-digit phone number',
+    description: 'User phone number (10 digits)',
     example: '9876543210',
   })
+  @IsNotEmpty()
   @IsString()
   @Length(10, 10)
   @Matches(/^[0-9]+$/, { message: 'Phone number must contain only digits' })
   ph_no: string;
-  
+
+  @ApiProperty({
+    description: 'User name',
+    example: 'John Doe',
+  })
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
   @ApiProperty({
     description: 'User role',
-    example: 'user',
     enum: UserRole,
-    default: UserRole.USER
+    default: UserRole.USER,
   })
-  @IsEnum(UserRole)
   @IsOptional()
+  @IsEnum(UserRole)
   role?: UserRole = UserRole.USER;
+}
+
+export class LoginDto {
+  @ApiProperty({
+    description: 'User phone number (10 digits)',
+    example: '9876543210',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @Length(10, 10)
+  @Matches(/^[0-9]+$/, { message: 'Phone number must contain only digits' })
+  ph_no: string;
 }
 
 export class VerifyOtpDto {
   @ApiProperty({
-    description: '10-digit phone number',
+    description: 'User phone number (10 digits)',
     example: '9876543210',
   })
+  @IsNotEmpty()
   @IsString()
   @Length(10, 10)
   @Matches(/^[0-9]+$/, { message: 'Phone number must contain only digits' })
@@ -42,6 +63,7 @@ export class VerifyOtpDto {
     description: '5-digit OTP',
     example: '12345',
   })
+  @IsNotEmpty()
   @IsString()
   @Length(5, 5)
   @Matches(/^[0-9]+$/, { message: 'OTP must contain only digits' })
@@ -49,21 +71,60 @@ export class VerifyOtpDto {
 }
 
 export class UserResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'User ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'User phone number',
+    example: '9876543210',
+  })
   ph_no: string;
 
   @ApiProperty({
+    description: 'User name',
+    example: 'John Doe',
+  })
+  name: string;
+
+  @ApiProperty({
+    description: 'User role',
     enum: UserRole,
-    example: UserRole.USER
+    example: UserRole.USER,
   })
   role: UserRole;
 
-  @ApiProperty()
-  createdAt: Date;
+  @ApiProperty({
+    description: 'Status message',
+    example: 'OTP verified successfully',
+  })
+  message: string;
+}
 
-  @ApiProperty()
-  updatedAt: Date;
+export class OtpResponseDto {
+  @ApiProperty({
+    description: 'User ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'User phone number',
+    example: '9876543210',
+  })
+  ph_no: string;
+
+  @ApiProperty({
+    description: '5-digit OTP (should not be returned in production)',
+    example: '12345',
+  })
+  otp: string;
+
+  @ApiProperty({
+    description: 'Status message',
+    example: 'OTP has been generated successfully',
+  })
+  message: string;
 }

@@ -7,43 +7,50 @@ module.exports = {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-        allowNull: false,
+        allowNull: false
       },
       ph_no: {
         type: Sequelize.STRING(10),
         allowNull: false,
-        unique: true,
+        unique: true
+      },
+      name: {
+        type: Sequelize.STRING,
+        allowNull: true
       },
       role: {
         type: Sequelize.STRING,
-        allowNull: true,
+        allowNull: true
       },
       access_token: {
         type: Sequelize.TEXT,
-        allowNull: true,
+        allowNull: true
       },
       otp: {
         type: Sequelize.STRING(5),
-        allowNull: true,
+        allowNull: true
       },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       },
       deletedAt: {
         type: Sequelize.DATE,
-        allowNull: true,
-      },
+        allowNull: true
+      }
     });
+
+    // Add any additional indexes if needed
+    await queryInterface.addIndex('users', ['ph_no']);
   },
 
-  down: async (queryInterface) => {
+  down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('users');
-  },
+  }
 };

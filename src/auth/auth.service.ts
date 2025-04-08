@@ -1,10 +1,10 @@
 // src/auth/auth.service.ts
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/user/models/user.model';
 import { InjectModel } from '@nestjs/sequelize';
 import { ConfigService } from '@nestjs/config';
-import { PhoneAuthDto, UserRole } from './dto/phone-auth.dto';
+import { RegisterDto, LoginDto, UserRole } from './dto/phone-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -23,58 +23,78 @@ export class AuthService {
   }
 
   /**
-   * Handle phone authentication - both for new and existing users
+   * Register a new user with phone number and name
    */
-  async authenticatePhone(phoneAuthDto: PhoneAuthDto): Promise<User> {
-    const { ph_no, role = UserRole.USER } = phoneAuthDto;
+  async register(registerDto: RegisterDto): Promise<User> {
+    const { ph_no, name, role = UserRole.USER } = registerDto;
 
-    // Check if user exists
-    let user = await this.userModel.findOne({
+    // Check if user already exists
+    const existingUser = await this.userModel.findOne({
       where: { ph_no },
     });
+
+    if (existingUser) {
+      throw new ConflictException('User with this phone number already exists');
+    }
 
     // Generate OTP
     const otp = this.generateOtp();
     
-    if (user) {
-      // User exists
-      // If role is provided and different from existing role, update it
-      if (role && role !== user.role) {
-        await user.update({ role });
-      }
-      
-      // Generate JWT with user ID and role
-      const payload = { 
-        ph_no, 
-        sub: user.id,
-        role: user.role
-      };
-      const accessToken = this.jwtService.sign(payload);
-      
-      // Update user with new OTP and token
-      await user.update({ 
-        otp, 
-        access_token: accessToken 
-      });
-    } else {
-      // New user - create with phone, role, OTP
-      user = await this.userModel.create({
-        ph_no,
-        role,
-        otp,
-      });
-      
-      // Generate JWT with new user ID and role
-      const payload = { 
-        ph_no, 
-        sub: user.id,
-        role: user.role
-      };
-      const accessToken = this.jwtService.sign(payload);
-      
-      // Update user with token
-      await user.update({ access_token: accessToken });
+    // Create new user
+    const user = await this.userModel.create({
+      ph_no,
+      name,
+      role,
+      otp,
+    });
+    
+    // Generate JWT with user info
+    const payload = { 
+      ph_no, 
+      sub: user.id,
+      role: user.role
+    };
+    const accessToken = this.jwtService.sign(payload);
+    
+    // Update user with token
+    await user.update({ access_token: accessToken });
+    
+    // In a real app, you'd send the OTP via SMS here
+    
+    return user;
+  }
+
+  /**
+   * Login existing user with phone number
+   */
+  async login(loginDto: LoginDto): Promise<User> {
+    const { ph_no } = loginDto;
+
+    // Check if user exists
+    const user = await this.userModel.findOne({
+      where: { ph_no },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User with this phone number not found');
     }
+
+    // Generate OTP
+    const otp = this.generateOtp();
+    
+    // Generate JWT with user info
+    const payload = { 
+      ph_no, 
+      sub: user.id,
+      role: user.role
+    };
+    const accessToken = this.jwtService.sign(payload);
+    
+    // Update user with new OTP and token
+    await user.update({ 
+      otp, 
+      access_token: accessToken 
+    });
     
     // In a real app, you'd send the OTP via SMS here
     
