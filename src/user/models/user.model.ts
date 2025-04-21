@@ -1,42 +1,58 @@
-// src/user/models/user.model.ts
-import { Table, Column, Model, DataType, PrimaryKey, Default, AllowNull } from 'sequelize-typescript';
+import { Column, Model, Table, DataType } from 'sequelize-typescript';
 
-@Table({ tableName: 'users', paranoid: true })
-export class User extends Model<User> {
-  @PrimaryKey
-  @Default(DataType.UUIDV4)
-  @Column(DataType.UUID)
+export enum Gender {
+  MALE = 'male',
+  FEMALE = 'female',
+  OTHER = 'other',
+}
+
+@Table({
+  tableName: 'users',
+  timestamps: true,
+})
+export class User extends Model {
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+    primaryKey: true,
+  })
   id: string;
 
-  @AllowNull(false)
   @Column({
-    type: DataType.STRING(10),
+    type: DataType.STRING,
+    allowNull: false,
     unique: true,
   })
   ph_no: string;
 
-  @AllowNull(true)
-  @Column(DataType.STRING)
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
   name: string;
 
-  @AllowNull(true)
-  @Column(DataType.STRING)
-  role: string;
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    unique: true,
+  })
+  email: string;
 
-  @AllowNull(true)
-  @Column(DataType.TEXT)
-  access_token: string;
+  @Column({
+    type: DataType.ENUM(...Object.values(Gender)),
+    allowNull: true,
+  })
+  gender: Gender;
 
-  @AllowNull(true)
-  @Column(DataType.STRING(5))
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
   otp: string;
 
-  @Column(DataType.DATE)
-  createdAt: Date;
-
-  @Column(DataType.DATE)
-  updatedAt: Date;
-
-  @Column(DataType.DATE)
-  deletedAt: Date;
+  @Column({
+    type: DataType.TEXT,
+    allowNull: true,
+  })
+  access_token: string;
 }

@@ -1,10 +1,8 @@
-// src/auth/auth.service.ts
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/user/models/user.model';
+import { User } from '../user/models/user.model';
 import { InjectModel } from '@nestjs/sequelize';
-import { ConfigService } from '@nestjs/config';
-import { RegisterDto, LoginDto, UserRole } from './dto/phone-auth.dto';
+import { RegisterDto, LoginDto } from './dto/phone-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -12,7 +10,6 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectModel(User)
     private readonly userModel: typeof User,
-    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -26,7 +23,7 @@ export class AuthService {
    * Register a new user with phone number and name
    */
   async register(registerDto: RegisterDto): Promise<User> {
-    const { ph_no, name, role = UserRole.USER } = registerDto;
+    const { ph_no, name } = registerDto;
 
     // Check if user already exists
     const existingUser = await this.userModel.findOne({
@@ -44,7 +41,6 @@ export class AuthService {
     const user = await this.userModel.create({
       ph_no,
       name,
-      role,
       otp,
     });
     
@@ -52,7 +48,6 @@ export class AuthService {
     const payload = { 
       ph_no, 
       sub: user.id,
-      role: user.role
     };
     const accessToken = this.jwtService.sign(payload);
     
@@ -86,7 +81,6 @@ export class AuthService {
     const payload = { 
       ph_no, 
       sub: user.id,
-      role: user.role
     };
     const accessToken = this.jwtService.sign(payload);
     
@@ -117,11 +111,10 @@ export class AuthService {
       throw new BadRequestException('Invalid OTP');
     }
 
-    // Generate a fresh token with user info including role
+    // Generate a fresh token with user info
     const payload = { 
       ph_no: user.ph_no, 
       sub: user.id,
-      role: user.role
     };
     const accessToken = this.jwtService.sign(payload);
     

@@ -1,11 +1,5 @@
-// src/auth/dto/phone-auth.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, Length, Matches } from 'class-validator';
-
-export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-}
+import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({
@@ -25,15 +19,6 @@ export class RegisterDto {
   @IsNotEmpty()
   @IsString()
   name: string;
-
-  @ApiProperty({
-    description: 'User role',
-    enum: UserRole,
-    default: UserRole.USER,
-  })
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole = UserRole.USER;
 }
 
 export class LoginDto {
@@ -88,13 +73,6 @@ export class UserResponseDto {
     example: 'John Doe',
   })
   name: string;
-
-  @ApiProperty({
-    description: 'User role',
-    enum: UserRole,
-    example: UserRole.USER,
-  })
-  role: UserRole;
 
   @ApiProperty({
     description: 'Status message',

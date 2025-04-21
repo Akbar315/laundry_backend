@@ -17,6 +17,7 @@ import { AuthGuard } from './auth/guards/auth.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { User } from './user/models/user.model';
 import { GlobalUploadModule } from './common/upload/global-upload.module';
+import { BookingModule } from './booking/booking.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { GlobalUploadModule } from './common/upload/global-upload.module';
     LogsModule,
     AuthModule,
     UserModule,
+    BookingModule
   ],
   controllers: [AppController],
   providers: [

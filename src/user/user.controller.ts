@@ -1,54 +1,114 @@
-import { Controller, Get, Put, Body, UseGuards, NotFoundException } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { User } from './models/user.model';
+import { 
+  Body, 
+  Controller, 
+  Get, 
+  HttpCode, 
+  HttpStatus, 
+  Patch, 
+  Res,
+  ConflictException,
+  NotFoundException
+} from '@nestjs/common';
+// import { UserService } from '../services/user.service';
 import { UserService } from './user.service';
-import { UserResponseDto } from '../auth/dto/phone-auth.dto';
-// import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+// import { UpdateProfileDto, ProfileResponseDto } from '../dto/profile.dto';
+import { UpdateProfileDto, ProfileResponseDto } from './dto/profile.dto';
+// import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { JwtUserPayload } from '../auth/interfaces/user.interface';
-// import { UpdateUserDto } from './dto/update-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Response } from 'express';
 
+@ApiTags('user')
+@Controller('user')
 @ApiBearerAuth('access-token')
-@ApiTags('users')
-@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('profile')
-  @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'User profile', type: UserResponseDto })
-  async getProfile(@CurrentUser() user: JwtUserPayload): Promise<Partial<User>> {
-    const userProfile = await this.userService.findById(user.sub);
-    
-    if (!userProfile) {
-      throw new NotFoundException('User not found');
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get user profile' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User profile retrieved successfully',
+    type: ProfileResponseDto
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'User not found'
+  })
+  async getProfile(@CurrentUser('sub') userId: string, @Res() res: Response) {
+    try {
+      const user = await this.userService.getProfile(userId);
+      
+      // Remove sensitive data before returning
+      const { otp: _, access_token: __, ...result } = user.get({ plain: true });
+      
+      return res.json({
+        ...result,
+        message: 'Profile retrieved successfully'
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          message: error.message
+        });
+      }
+      
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to retrieve profile',
+        error: error.message
+      });
     }
-    
-    // Remove sensitive fields from response
-    const { access_token, otp, ...result } = userProfile.get({ plain: true });
-    return result;
   }
 
-  @Put('profile')
+  @Patch('profile')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update user profile' })
-  @ApiResponse({ status: 200, description: 'User profile updated', type: UserResponseDto })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User profile updated successfully',
+    type: ProfileResponseDto
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: 'User not found'
+  })
+  @ApiResponse({ 
+    status: 409, 
+    description: 'Email or phone number already in use'
+  })
   async updateProfile(
-    @CurrentUser() user: JwtUserPayload,
-    @Body() updateUserDto: UpdateUserDto
-  ): Promise<Partial<User>> {
-    const updatedUser = await this.userService.updateUser(user.sub, updateUserDto);
-    
-    // Remove sensitive fields from response
-    const { access_token, otp, ...result } = updatedUser.get({ plain: true });
-    return result;
-  }
-  
-  @Get('phone/:phone')
-  @ApiOperation({ summary: 'Check if phone number exists' })
-  @ApiResponse({ status: 200, description: 'Phone number status' })
-  async checkPhoneExists(@CurrentUser() user: JwtUserPayload, @Body('ph_no') phone: string): Promise<{ exists: boolean }> {
-    const exists = await this.userService.checkPhoneExists(phone);
-    return { exists };
+    @CurrentUser('sub') userId: string, 
+    @Body() updateProfileDto: UpdateProfileDto,
+    @Res() res: Response
+  ) {
+    try {
+      const user = await this.userService.updateProfile(userId, updateProfileDto);
+      
+      // Remove sensitive data before returning
+      const { otp: _, access_token: __, ...result } = user.get({ plain: true });
+      
+      return res.json({
+        ...result,
+        message: 'Profile updated successfully'
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          message: error.message
+        });
+      }
+      
+      if (error instanceof ConflictException) {
+        return res.status(HttpStatus.CONFLICT).json({
+          message: error.message
+        });
+      }
+      
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        message: 'Failed to update profile',
+        error: error.message
+      });
+    }
   }
 }
