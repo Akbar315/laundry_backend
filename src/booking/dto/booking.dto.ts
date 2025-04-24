@@ -27,9 +27,9 @@ export class CreateBookingDto {
   })
   @IsNotEmpty()
   @IsString()
-  @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, { 
-    message: 'Time must be in 24-hour format (HH:MM)' 
-  })
+  // @Matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, { 
+  //   message: 'Time must be in 24-hour format (HH:MM)' 
+  // })
   booking_time: string;
 }
 
