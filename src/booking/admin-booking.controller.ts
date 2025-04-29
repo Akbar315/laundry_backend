@@ -15,13 +15,16 @@ import { BookingService } from './booking.service';
   import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
   import { UpdateBookingStatusDto, BookingResponseDto } from './dto/booking.dto';
   import { Response } from 'express';
+import { Public } from 'src/auth/decorators/public.decorator';
   
+  @Public()
   @ApiTags('admin-bookings')
   @Controller('admin/bookings')
   @ApiBearerAuth('access-token')
   export class AdminBookingController {
     constructor(private readonly bookingService: BookingService) {}
   
+    @Public()
     @Get()
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Admin: Get all bookings' })
@@ -46,6 +49,7 @@ import { BookingService } from './booking.service';
       }
     }
   
+    @Public()
     @Patch(':id/status')
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Admin: Update booking status' })
